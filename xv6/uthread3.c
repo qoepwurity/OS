@@ -68,7 +68,7 @@ thread_schedule(void)
 void 
 thread_init(void)
 {
-  uthread_init(thread_schedule);
+  uthread_init((int)thread_schedule);
 
   // main() is thread 0, which will make the first invocation to
   // thread_schedule().  it needs a stack so that the first thread_switch() can

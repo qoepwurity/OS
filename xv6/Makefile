@@ -168,6 +168,9 @@ _uthread1: uthread1.o uthread_switch.o
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _uthread1 uthread1.o uthread_switch.o $(ULIB)
 	$(OBJDUMP) -S _uthread1 > uthread1.asm
 
+_uthread3: uthread3.o uthread_switch.o ulib.o usys.o printf.o umalloc.o
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _uthread3 uthread3.o uthread_switch.o ulib.o usys.o printf.o umalloc.o
+
 mkfs: mkfs.c fs.h
 	gcc -Werror -Wall -o mkfs mkfs.c
 
