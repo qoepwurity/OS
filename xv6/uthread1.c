@@ -1,6 +1,8 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+/*안녕하시오~~*/
+/*이게 아닌가*/
 
 /* Possible states of a thread; */
 #define FREE        0x0
