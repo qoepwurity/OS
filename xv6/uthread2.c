@@ -126,7 +126,7 @@ mythread(void)
   current_thread->state = FREE;
 }
 
-// a
+//이게 바꼈지
 int 
 main(int argc, char *argv[]) 
 {

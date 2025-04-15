@@ -24,9 +24,7 @@ static thread_t all_thread[MAX_THREAD];
 thread_p  current_thread;
 thread_p  next_thread;
 extern void thread_switch(void);
-
 extern void thread_schedule(void);
-//extern int check_counter(int op);
 
 void 
 thread_init(void)
@@ -99,8 +97,6 @@ thread_create(void (*func)())
     t->sp -= 32;                             // space for registers that thread_switch expects
     t->state = RUNNABLE;  
     check_counter(+1);
-
-  printf(1, "thread_create: t=0x%x sp=0x%x func=0x%x\n", t, t->sp, (int)func);
 }
 
 void 
@@ -121,7 +117,6 @@ mythread(void)
 int 
 main(int argc, char *argv[]) 
 {
-  printf(1, "main start\n");
   thread_init();
   thread_create((void (*)())mythread);
   thread_create((void (*)())mythread);
