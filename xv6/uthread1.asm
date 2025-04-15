@@ -5,31 +5,56 @@ _uthread1:     file format elf32-i386
 Disassembly of section .text:
 
 00000000 <thread_init>:
+extern void thread_schedule(void);
+//extern int check_counter(int op);
+
+void 
+thread_init(void)
+{
    0:	55                   	push   %ebp
    1:	89 e5                	mov    %esp,%ebp
    3:	83 ec 08             	sub    $0x8,%esp
+  uthread_init((int)thread_schedule);
    6:	b8 33 00 00 00       	mov    $0x33,%eax
    b:	83 ec 0c             	sub    $0xc,%esp
    e:	50                   	push   %eax
    f:	e8 bc 05 00 00       	call   5d0 <uthread_init>
   14:	83 c4 10             	add    $0x10,%esp
+  // main() is thread 0, which will make the first invocation to
+  // thread_schedule().  it needs a stack so that the first thread_switch() can
+  // save thread 0's state.  thread_schedule() won't run the main thread ever
+  // again, because its state is set to RUNNING, and thread_schedule() selects
+  // a RUNNABLE thread.
+  current_thread = &all_thread[0];
   17:	c7 05 20 0e 00 00 40 	movl   $0xe40,0xe20
   1e:	0e 00 00 
+  current_thread->state = RUNNING;
   21:	a1 20 0e 00 00       	mov    0xe20,%eax
   26:	c7 80 04 20 00 00 01 	movl   $0x1,0x2004(%eax)
   2d:	00 00 00 
+}
   30:	90                   	nop
   31:	c9                   	leave  
   32:	c3                   	ret    
 
 00000033 <thread_schedule>:
+
+void 
+thread_schedule(void)
+{
   33:	55                   	push   %ebp
   34:	89 e5                	mov    %esp,%ebp
   36:	83 ec 18             	sub    $0x18,%esp
+  thread_p t;
+
+  /* Find another runnable thread. */
+  next_thread = 0;
   39:	c7 05 24 0e 00 00 00 	movl   $0x0,0xe24
   40:	00 00 00 
+  for (t = all_thread; t < all_thread + MAX_THREAD; t++) {
   43:	c7 45 f4 40 0e 00 00 	movl   $0xe40,-0xc(%ebp)
   4a:	eb 29                	jmp    75 <thread_schedule+0x42>
+    if (t->state == RUNNABLE && t != current_thread) {
   4c:	8b 45 f4             	mov    -0xc(%ebp),%eax
   4f:	8b 80 04 20 00 00    	mov    0x2004(%eax),%eax
   55:	83 f8 02             	cmp    $0x2,%eax
@@ -37,13 +62,20 @@ Disassembly of section .text:
   5a:	a1 20 0e 00 00       	mov    0xe20,%eax
   5f:	39 45 f4             	cmp    %eax,-0xc(%ebp)
   62:	74 0a                	je     6e <thread_schedule+0x3b>
+      next_thread = t;
   64:	8b 45 f4             	mov    -0xc(%ebp),%eax
   67:	a3 24 0e 00 00       	mov    %eax,0xe24
+      break;
   6c:	eb 11                	jmp    7f <thread_schedule+0x4c>
+  for (t = all_thread; t < all_thread + MAX_THREAD; t++) {
   6e:	81 45 f4 08 20 00 00 	addl   $0x2008,-0xc(%ebp)
   75:	b8 60 8e 00 00       	mov    $0x8e60,%eax
   7a:	39 45 f4             	cmp    %eax,-0xc(%ebp)
   7d:	72 cd                	jb     4c <thread_schedule+0x19>
+    }
+  }
+
+  if (t >= all_thread + MAX_THREAD && current_thread->state == RUNNABLE) {
   7f:	b8 60 8e 00 00       	mov    $0x8e60,%eax
   84:	39 45 f4             	cmp    %eax,-0xc(%ebp)
   87:	72 1a                	jb     a3 <thread_schedule+0x70>
@@ -51,95 +83,143 @@ Disassembly of section .text:
   8e:	8b 80 04 20 00 00    	mov    0x2004(%eax),%eax
   94:	83 f8 02             	cmp    $0x2,%eax
   97:	75 0a                	jne    a3 <thread_schedule+0x70>
+    /* The current thread is the only runnable thread; run it. */
+    next_thread = current_thread;
   99:	a1 20 0e 00 00       	mov    0xe20,%eax
   9e:	a3 24 0e 00 00       	mov    %eax,0xe24
+  }
+
+  if (next_thread == 0) {
   a3:	a1 24 0e 00 00       	mov    0xe24,%eax
   a8:	85 c0                	test   %eax,%eax
   aa:	75 17                	jne    c3 <thread_schedule+0x90>
+    printf(2, "thread_schedule: no runnable threads\n");
   ac:	83 ec 08             	sub    $0x8,%esp
   af:	68 6c 0a 00 00       	push   $0xa6c
   b4:	6a 02                	push   $0x2
   b6:	e8 f9 05 00 00       	call   6b4 <printf>
   bb:	83 c4 10             	add    $0x10,%esp
+    exit();
   be:	e8 6d 04 00 00       	call   530 <exit>
+  }
+
+  if (current_thread != next_thread) {         /* switch threads?  */
   c3:	8b 15 20 0e 00 00    	mov    0xe20,%edx
   c9:	a1 24 0e 00 00       	mov    0xe24,%eax
   ce:	39 c2                	cmp    %eax,%edx
   d0:	74 41                	je     113 <thread_schedule+0xe0>
+    next_thread->state = RUNNING;
   d2:	a1 24 0e 00 00       	mov    0xe24,%eax
   d7:	c7 80 04 20 00 00 01 	movl   $0x1,0x2004(%eax)
   de:	00 00 00 
+    if (current_thread != &all_thread[0]) {
   e1:	a1 20 0e 00 00       	mov    0xe20,%eax
   e6:	3d 40 0e 00 00       	cmp    $0xe40,%eax
   eb:	74 1f                	je     10c <thread_schedule+0xd9>
+      if (current_thread->state == RUNNING) {
   ed:	a1 20 0e 00 00       	mov    0xe20,%eax
   f2:	8b 80 04 20 00 00    	mov    0x2004(%eax),%eax
   f8:	83 f8 01             	cmp    $0x1,%eax
   fb:	75 0f                	jne    10c <thread_schedule+0xd9>
+        current_thread->state = RUNNABLE;
   fd:	a1 20 0e 00 00       	mov    0xe20,%eax
  102:	c7 80 04 20 00 00 02 	movl   $0x2,0x2004(%eax)
  109:	00 00 00 
+      }
+    }
+    thread_switch();
  10c:	e8 a3 01 00 00       	call   2b4 <thread_switch>
+  } else
+    next_thread = 0;
+}
  111:	eb 0a                	jmp    11d <thread_schedule+0xea>
+    next_thread = 0;
  113:	c7 05 24 0e 00 00 00 	movl   $0x0,0xe24
  11a:	00 00 00 
+}
  11d:	90                   	nop
  11e:	c9                   	leave  
  11f:	c3                   	ret    
 
 00000120 <thread_create>:
+
+
+
+void 
+thread_create(void (*func)())
+{
  120:	55                   	push   %ebp
  121:	89 e5                	mov    %esp,%ebp
  123:	83 ec 18             	sub    $0x18,%esp
+  thread_p t;
+
+  for (t = all_thread; t < all_thread + MAX_THREAD; t++) {
  126:	c7 45 f4 40 0e 00 00 	movl   $0xe40,-0xc(%ebp)
  12d:	eb 14                	jmp    143 <thread_create+0x23>
+    if (t->state == FREE) break;
  12f:	8b 45 f4             	mov    -0xc(%ebp),%eax
  132:	8b 80 04 20 00 00    	mov    0x2004(%eax),%eax
  138:	85 c0                	test   %eax,%eax
  13a:	74 13                	je     14f <thread_create+0x2f>
+  for (t = all_thread; t < all_thread + MAX_THREAD; t++) {
  13c:	81 45 f4 08 20 00 00 	addl   $0x2008,-0xc(%ebp)
  143:	b8 60 8e 00 00       	mov    $0x8e60,%eax
  148:	39 45 f4             	cmp    %eax,-0xc(%ebp)
  14b:	72 e2                	jb     12f <thread_create+0xf>
  14d:	eb 01                	jmp    150 <thread_create+0x30>
+    if (t->state == FREE) break;
  14f:	90                   	nop
+  }
+
+  if (t == all_thread + MAX_THREAD) {
  150:	b8 60 8e 00 00       	mov    $0x8e60,%eax
  155:	39 45 f4             	cmp    %eax,-0xc(%ebp)
  158:	75 14                	jne    16e <thread_create+0x4e>
+    printf(1, "thread_create: no available slot\n");
  15a:	83 ec 08             	sub    $0x8,%esp
  15d:	68 94 0a 00 00       	push   $0xa94
  162:	6a 01                	push   $0x1
  164:	e8 4b 05 00 00       	call   6b4 <printf>
  169:	83 c4 10             	add    $0x10,%esp
+    return;
  16c:	eb 71                	jmp    1df <thread_create+0xbf>
+  }
+    t->sp = (int) (t->stack + STACK_SIZE);   // set sp to the top of the stack
  16e:	8b 45 f4             	mov    -0xc(%ebp),%eax
  171:	83 c0 04             	add    $0x4,%eax
  174:	05 00 20 00 00       	add    $0x2000,%eax
  179:	89 c2                	mov    %eax,%edx
  17b:	8b 45 f4             	mov    -0xc(%ebp),%eax
  17e:	89 10                	mov    %edx,(%eax)
+    t->sp -= 4;                              // space for return address
  180:	8b 45 f4             	mov    -0xc(%ebp),%eax
  183:	8b 00                	mov    (%eax),%eax
  185:	8d 50 fc             	lea    -0x4(%eax),%edx
  188:	8b 45 f4             	mov    -0xc(%ebp),%eax
  18b:	89 10                	mov    %edx,(%eax)
+    *(void **)(t->sp) = func;
  18d:	8b 45 f4             	mov    -0xc(%ebp),%eax
  190:	8b 00                	mov    (%eax),%eax
  192:	89 c2                	mov    %eax,%edx
  194:	8b 45 08             	mov    0x8(%ebp),%eax
  197:	89 02                	mov    %eax,(%edx)
+    t->sp -= 32;                             // space for registers that thread_switch expects
  199:	8b 45 f4             	mov    -0xc(%ebp),%eax
  19c:	8b 00                	mov    (%eax),%eax
  19e:	8d 50 e0             	lea    -0x20(%eax),%edx
  1a1:	8b 45 f4             	mov    -0xc(%ebp),%eax
  1a4:	89 10                	mov    %edx,(%eax)
+    t->state = RUNNABLE;  
  1a6:	8b 45 f4             	mov    -0xc(%ebp),%eax
  1a9:	c7 80 04 20 00 00 02 	movl   $0x2,0x2004(%eax)
  1b0:	00 00 00 
+    check_counter(+1);
  1b3:	83 ec 0c             	sub    $0xc,%esp
  1b6:	6a 01                	push   $0x1
  1b8:	e8 1b 04 00 00       	call   5d8 <check_counter>
  1bd:	83 c4 10             	add    $0x10,%esp
+
+  printf(1, "thread_create: t=0x%x sp=0x%x func=0x%x\n", t, t->sp, (int)func);
  1c0:	8b 55 08             	mov    0x8(%ebp),%edx
  1c3:	8b 45 f4             	mov    -0xc(%ebp),%eax
  1c6:	8b 00                	mov    (%eax),%eax
@@ -151,20 +231,29 @@ Disassembly of section .text:
  1d5:	6a 01                	push   $0x1
  1d7:	e8 d8 04 00 00       	call   6b4 <printf>
  1dc:	83 c4 20             	add    $0x20,%esp
+}
  1df:	c9                   	leave  
  1e0:	c3                   	ret    
 
 000001e1 <mythread>:
+
+void 
+mythread(void)
+{
  1e1:	55                   	push   %ebp
  1e2:	89 e5                	mov    %esp,%ebp
  1e4:	83 ec 18             	sub    $0x18,%esp
+  int i;
+  printf(1, "my thread running\n");
  1e7:	83 ec 08             	sub    $0x8,%esp
  1ea:	68 e1 0a 00 00       	push   $0xae1
  1ef:	6a 01                	push   $0x1
  1f1:	e8 be 04 00 00       	call   6b4 <printf>
  1f6:	83 c4 10             	add    $0x10,%esp
+  for (i = 0; i < 100; i++) {
  1f9:	c7 45 f4 00 00 00 00 	movl   $0x0,-0xc(%ebp)
  200:	eb 1c                	jmp    21e <mythread+0x3d>
+    printf(1, "my thread 0x%x\n", (int) current_thread);
  202:	a1 20 0e 00 00       	mov    0xe20,%eax
  207:	83 ec 04             	sub    $0x4,%esp
  20a:	50                   	push   %eax
@@ -172,27 +261,39 @@ Disassembly of section .text:
  210:	6a 01                	push   $0x1
  212:	e8 9d 04 00 00       	call   6b4 <printf>
  217:	83 c4 10             	add    $0x10,%esp
+  for (i = 0; i < 100; i++) {
  21a:	83 45 f4 01          	addl   $0x1,-0xc(%ebp)
  21e:	83 7d f4 63          	cmpl   $0x63,-0xc(%ebp)
  222:	7e de                	jle    202 <mythread+0x21>
+  }
+  printf(1, "my thread: exit\n");
  224:	83 ec 08             	sub    $0x8,%esp
  227:	68 04 0b 00 00       	push   $0xb04
  22c:	6a 01                	push   $0x1
  22e:	e8 81 04 00 00       	call   6b4 <printf>
  233:	83 c4 10             	add    $0x10,%esp
+  current_thread->state = FREE;
  236:	a1 20 0e 00 00       	mov    0xe20,%eax
  23b:	c7 80 04 20 00 00 00 	movl   $0x0,0x2004(%eax)
  242:	00 00 00 
+
+  check_counter(-1);
  245:	83 ec 0c             	sub    $0xc,%esp
  248:	6a ff                	push   $0xffffffff
  24a:	e8 89 03 00 00       	call   5d8 <check_counter>
  24f:	83 c4 10             	add    $0x10,%esp
+  thread_schedule();
  252:	e8 dc fd ff ff       	call   33 <thread_schedule>
+}
  257:	90                   	nop
  258:	c9                   	leave  
  259:	c3                   	ret    
 
 0000025a <main>:
+
+int 
+main(int argc, char *argv[]) 
+{
  25a:	8d 4c 24 04          	lea    0x4(%esp),%ecx
  25e:	83 e4 f0             	and    $0xfffffff0,%esp
  261:	ff 71 fc             	push   -0x4(%ecx)
@@ -200,21 +301,27 @@ Disassembly of section .text:
  265:	89 e5                	mov    %esp,%ebp
  267:	51                   	push   %ecx
  268:	83 ec 04             	sub    $0x4,%esp
+  printf(1, "main start\n");
  26b:	83 ec 08             	sub    $0x8,%esp
  26e:	68 15 0b 00 00       	push   $0xb15
  273:	6a 01                	push   $0x1
  275:	e8 3a 04 00 00       	call   6b4 <printf>
  27a:	83 c4 10             	add    $0x10,%esp
+  thread_init();
  27d:	e8 7e fd ff ff       	call   0 <thread_init>
+  thread_create((void (*)())mythread);
  282:	83 ec 0c             	sub    $0xc,%esp
  285:	68 e1 01 00 00       	push   $0x1e1
  28a:	e8 91 fe ff ff       	call   120 <thread_create>
  28f:	83 c4 10             	add    $0x10,%esp
+  thread_create((void (*)())mythread);
  292:	83 ec 0c             	sub    $0xc,%esp
  295:	68 e1 01 00 00       	push   $0x1e1
  29a:	e8 81 fe ff ff       	call   120 <thread_create>
  29f:	83 c4 10             	add    $0x10,%esp
+  thread_schedule();
  2a2:	e8 8c fd ff ff       	call   33 <thread_schedule>
+  return 0;
  2a7:	b8 00 00 00 00       	mov    $0x0,%eax
  2ac:	8b 4d fc             	mov    -0x4(%ebp),%ecx
  2af:	c9                   	leave  
