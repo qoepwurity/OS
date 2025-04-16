@@ -31,4 +31,4 @@ SYSCALL(sleep)
 SYSCALL(uptime)
 
 SYSCALL(uthread_init)
-SYSCALL(check_counter)
+SYSCALL(check_thread)

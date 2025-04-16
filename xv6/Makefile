@@ -168,11 +168,8 @@ _uthread1: uthread1.o uthread_switch.o
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _uthread1 uthread1.o uthread_switch.o $(ULIB)
 	$(OBJDUMP) -S _uthread1 > uthread1.asm
 
-_uthread3.o: uthread3.c
-	$(CC) -g -Wall -m32 -O0 -fno-pic -fno-builtin -fno-omit-frame-pointer -fno-stack-protector -fno-strict-aliasing -fno-inline -c -o uthread3.o uthread3.c
-
-_uthread2: uthread2.o uthread_switch.o ulib.o usys.o printf.o umalloc.o
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _uthread2 uthread2.o uthread_switch.o ulib.o usys.o printf.o umalloc.o
+_uthread2: uthread2.o uthread_switch.o
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _uthread2 uthread2.o uthread_switch.o $(ULIB)
 	$(OBJDUMP) -S _uthread2 > uthread2.asm
 
 mkfs: mkfs.c fs.h
@@ -202,7 +199,6 @@ UPROGS=\
 	_zombie\
 	_uthread1\
 	_uthread2\
-	_uthread3\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

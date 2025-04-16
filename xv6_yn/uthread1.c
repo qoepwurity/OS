@@ -31,7 +31,6 @@ void
 thread_init(void)
 {
   uthread_init((int)thread_schedule);
-
   // main() is thread 0, which will make the first invocation to
   // thread_schedule().  it needs a stack so that the first thread_switch() can
   // save thread 0's state.  thread_schedule() won't run the main thread ever
@@ -43,7 +42,7 @@ thread_init(void)
 
 void 
 thread_schedule(void)
-{
+{ 
   thread_p t;
 
   /* Find another runnable thread. */
@@ -69,7 +68,8 @@ thread_schedule(void)
     next_thread->state = RUNNING;
     if(current_thread != &all_thread[0]&&current_thread->state==RUNNING){
       current_thread->state=RUNNABLE;
-    }  
+    } 
+    
     thread_switch();
   } else
     next_thread = 0;
@@ -83,13 +83,13 @@ thread_create(void (*func)())
   for (t = all_thread; t < all_thread + MAX_THREAD; t++) {
     if (t->state == FREE) break;
   }
+
   t->sp = (int) (t->stack + STACK_SIZE);   // set sp to the top of the stack
   t->sp -= 4;                              // space for return address
   * (int *) (t->sp) = (int)func;           // push return address on stack
   t->sp -= 28;                             // space for registers that thread_switch expects
   t->state = RUNNABLE;  
   thread_inc();
-  printf(1, "*sp = 0x%x\n", * (int *) (t->sp));
 }
 
 static void 
@@ -97,14 +97,14 @@ mythread(void)
 {
   int i;
   printf(1, "my thread running\n");
-  for (i = 0; i < 100; i++) {
+  for (i = 0; i < 100; i++) {  
     printf(1, "my thread 0x%x\n", (int) current_thread);
   }
   printf(1, "my thread: exit\n");
   current_thread->state = FREE;
   thread_dec();
   thread_schedule();
-  __builtin_unreachable();
+  
 }
 
 

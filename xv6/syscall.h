@@ -22,4 +22,4 @@
 #define SYS_close  21
 
 #define SYS_uthread_init  22 // 이거 추가
-#define SYS_check_counter 23
+#define SYS_check_thread 23
