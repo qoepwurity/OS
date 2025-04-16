@@ -88,17 +88,29 @@ thread_create(void (*func)())
   for (t = all_thread; t < all_thread + MAX_THREAD; t++) {  //모든 스레드를 돌면서~
     if (t->state == FREE) break;    //상태가 free면. 즉 스레드 만들 수 있는 게 있다.
   }
+
+  //added from thread1
+  if (t == all_thread + MAX_THREAD) {
+    printf(1, "thread_create: no available slot\n");
+    return;
+  }
+
   t->sp = (int) (t->stack + STACK_SIZE);   // set sp to the top of the stack
   t->sp -= 4;                              // 리턴 주소를 위한 공간
-  /* 
-    set tid 
-  */
-  * (int *) (t->sp) = (int)func;           // push return address on stack
+  
+  /* set tid */
+  t->tid = t - all_thread; // 배열에서 인덱스로 tid 설정  
+
+
+  //
+  * (int **) (t->sp) = (int)func;           // push return address on stack
   t->sp -= 32;                             // space for registers that thread_switch expects
   t->state = RUNNABLE;
+  check_counter(+1);  //added from thread1
 
   return t->tid;
 }
+
 
 static void 
 thread_suspend(int tid)
@@ -186,6 +198,10 @@ mythread(void)
   }
   printf(1, "my thread: exit\n");
   current_thread->state = FREE;
+
+  //uthread1에 있던 거 추가
+  //check_counter(-1);
+  thread_schedule();
 }
 
 
@@ -193,9 +209,10 @@ int
 main(int argc, char *argv[]) 
 {
   int tid1, tid2;
+  printf(1, "main start\n");
   thread_init();
-  tid1=thread_create(mythread);
-  tid2=thread_create(mythread);
+  tid1=thread_create((void (*)())mythread);
+  tid2=thread_create((void (*)())mythread);
   sleep(3); /* you can adjust the sleep time */
   thread_suspend(tid1);
   sleep(3);

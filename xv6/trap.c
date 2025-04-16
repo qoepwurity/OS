@@ -64,7 +64,6 @@ trap(struct trapframe *tf)
         p->tf->eip = p->scheduler;
       }
     }
-    
 
     break;
   case T_IRQ0 + IRQ_IDE:
