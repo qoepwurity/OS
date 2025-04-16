@@ -8,6 +8,7 @@
 #define FREE        0x0
 #define RUNNING     0x1
 #define RUNNABLE    0x2
+//과제2
 
 #define STACK_SIZE  8192
 #define MAX_THREAD  4
