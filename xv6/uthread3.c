@@ -92,7 +92,7 @@ thread_create(void (*func)())
   //added from thread1
   if (t == all_thread + MAX_THREAD) {
     printf(1, "thread_create: no available slot\n");
-    return;
+    return -1;
   }
 
   t->sp = (int) (t->stack + STACK_SIZE);   // set sp to the top of the stack
@@ -103,7 +103,7 @@ thread_create(void (*func)())
 
 
   //
-  * (int **) (t->sp) = (int)func;           // push return address on stack
+  *((int *)(t->sp)) = (int)func;           // push return address on stack
   t->sp -= 32;                             // space for registers that thread_switch expects
   t->state = RUNNABLE;
   check_counter(+1);  //added from thread1
@@ -115,12 +115,8 @@ thread_create(void (*func)())
 static void 
 thread_suspend(int tid)
 {
-  /*
-    suspend the thread with tid
-    상태를 wait로 설정
-  */
-    thread_p t;
-    // 주어진 tid에 해당하는 스레드를 찾기.
+  thread_p t;
+  // 주어진 tid에 해당하는 스레드를 찾기.
   for (t = all_thread; t < all_thread + MAX_THREAD; t++) {
     if (t->tid == tid) {
       break;
@@ -144,21 +140,15 @@ thread_suspend(int tid)
 
   // 현재 스레드가 멈추는 경우, 스케줄러에 의해 다른 스레드가 실행되도록 한다.
   if (t == current_thread) {
-    // 현재 실행 중인 스레드가 멈춰진 경우, 스케줄러를 호출하여 다른 스레드 실행
     thread_schedule();
   }
 
   printf(1, "thread %d suspended\n", tid);
-
 }
 
 static void 
 thread_resume(int tid)
 {
-  /*
-    resume execution of the thread with tid
-  */
-
   thread_p t;
 
   // 주어진 tid에 해당하는 스레드를 찾습니다.
@@ -171,7 +161,7 @@ thread_resume(int tid)
   // 만약 tid에 해당하는 스레드가 존재하지 않으면 에러 처리
   if (t >= all_thread + MAX_THREAD) {
     printf(2, "thread_resume: thread with tid %d not found\n", tid);
-    return; // 스레드가 없으면 종료
+    return;
   }
 
   // 이미 실행 중인 스레드는 재개할 필요 없음
@@ -183,7 +173,6 @@ thread_resume(int tid)
   // 스레드 상태를 RUNNABLE로 설정하여 재개 가능하도록 설정
   t->state = RUNNABLE;
 
-  // 스레드가 `WAIT` 상태에서 재개되는 경우, 스케줄러가 해당 스레드를 선택할 수 있도록 해야 함
   printf(1, "thread %d resumed\n", tid);
 }
 
@@ -200,7 +189,7 @@ mythread(void)
   current_thread->state = FREE;
 
   //uthread1에 있던 거 추가
-  //check_counter(-1);
+  check_counter(-1);
   thread_schedule();
 }
 
@@ -208,18 +197,25 @@ mythread(void)
 int 
 main(int argc, char *argv[]) 
 {
-  int tid1, tid2;
-  printf(1, "main start\n");
+  int tid1, tid2,tid3;
+  printf(1, "main start~~!!\n");
   thread_init();
   tid1=thread_create((void (*)())mythread);
   tid2=thread_create((void (*)())mythread);
-  sleep(3); /* you can adjust the sleep time */
+  tid3=thread_create((void (*)())mythread);
+  sleep(100); /* you can adjust the sleep time */
   thread_suspend(tid1);
-  sleep(3);
+  sleep(100);
   thread_suspend(tid2);
+  sleep(100);
+  thread_suspend(tid3);
+  sleep(100);
+  thread_suspend(tid1);
   thread_resume(tid1);
-  sleep(3);
+  sleep(100);
   thread_resume(tid2);
+  sleep(100);
+  thread_resume(tid3);
   sleep(100);
   exit();
 }
