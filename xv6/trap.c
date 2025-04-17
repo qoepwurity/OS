@@ -59,11 +59,12 @@ trap(struct trapframe *tf)
 
     // 🔥 유저모드 + scheduler 설정된 경우만 실행
     struct proc *p = myproc();
-    if (p && p->state == RUNNING && p->scheduler /*&& (tf->cs & 3) == DPL_USER*/) {
-      if(p->check_counter >= 2){
+    if (p && p->state == RUNNING && p->scheduler) {
+      if(p->check_thread >= 2){
         p->tf->eip = p->scheduler;
       }
     }
+    
 
     break;
   case T_IRQ0 + IRQ_IDE:

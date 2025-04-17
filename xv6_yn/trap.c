@@ -58,9 +58,9 @@ trap(struct trapframe *tf)
     lapiceoi();    
 
     struct proc *p = myproc();
-    if(p!=0&&p->scheduler!=0){
-      if(p->thread_count >= 2){
-        p->tf->eip = p->scheduler;
+    if(p!=0&&p->scheduler!=0 && p->thread_count >= 2){  // thread가 2개 이상 있으면 스케줄링
+      if(ticks % 10 == 0){
+        p->tf->eip = p->scheduler;  // 타이머 인터럽트가 끝난 후에 스케줄러가 실행되도록 
       }
     }
     

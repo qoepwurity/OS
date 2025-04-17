@@ -24,8 +24,9 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
-int uthread_init(int address);  
-int check_counter(int op);
+
+int uthread_init(int address);
+int check_thread(int op);
 
 // ulib.c
 int stat(char*, struct stat*);

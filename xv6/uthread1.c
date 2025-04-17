@@ -1,19 +1,14 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
-/*안녕하시오~~*/
-/*이게 아닌가*/
 
 /* Possible states of a thread; */
 #define FREE        0x0
 #define RUNNING     0x1
 #define RUNNABLE    0x2
-//과제2
 
 #define STACK_SIZE  8192
 #define MAX_THREAD  4
-
-void mythread(void);
 
 typedef struct thread thread_t, *thread_p;
 typedef struct mutex mutex_t, *mutex_p;
@@ -27,9 +22,7 @@ static thread_t all_thread[MAX_THREAD];
 thread_p  current_thread;
 thread_p  next_thread;
 extern void thread_switch(void);
-
 extern void thread_schedule(void);
-//extern int check_counter(int op);
 
 void 
 thread_init(void)
@@ -98,12 +91,10 @@ thread_create(void (*func)())
   }
     t->sp = (int) (t->stack + STACK_SIZE);   // set sp to the top of the stack
     t->sp -= 4;                              // space for return address
-    *(void **)(t->sp) = func;
+    * (int *) (t->sp) = (int)func;
     t->sp -= 32;                             // space for registers that thread_switch expects
     t->state = RUNNABLE;  
-    check_counter(+1);
-
-  printf(1, "thread_create: t=0x%x sp=0x%x func=0x%x\n", t, t->sp, (int)func);
+    check_thread(+1);
 }
 
 void 
@@ -117,14 +108,13 @@ mythread(void)
   printf(1, "my thread: exit\n");
   current_thread->state = FREE;
 
-  check_counter(-1);
+  check_thread(-1);
   thread_schedule();
 }
 
 int 
 main(int argc, char *argv[]) 
 {
-  printf(1, "main start\n");
   thread_init();
   thread_create((void (*)())mythread);
   thread_create((void (*)())mythread);

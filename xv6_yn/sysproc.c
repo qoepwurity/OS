@@ -91,12 +91,12 @@ sys_uptime(void)
 }
 
 int 
-sys_uthread_init (void) 
+sys_uthread_init (void) // proc 구조체에 thread_scheduler 주소 저장
 {
   struct proc* p;
   int addr;
 
-  if (argint(0, &addr) < 0)
+  if (argint(0, &addr) < 0)  // syscall.c에 있는 argint() 이용
     return -1;
 
   p = myproc();
@@ -106,14 +106,18 @@ sys_uthread_init (void)
   return 0;
 }
 
-int sys_thread_inc(void) {
+int 
+sys_thread_inc(void) // thread 개수 증가
+{
   struct proc* p;
   p = myproc();
   p->thread_count++;
   return 0;
 }
 
-int sys_thread_dec(void) {
+int 
+sys_thread_dec(void) // thread 개수 감소
+{
   struct proc* p;
   p = myproc();
   p->thread_count--;

@@ -7,7 +7,7 @@
 
 	.globl thread_switch
 thread_switch:
-	push %eax
+	push %eax		#current_thread 레지스터 값들을 스택에 저장
 	push %ebx
 	push %ecx
 	push %edx
@@ -18,10 +18,10 @@ thread_switch:
 	movl current_thread, %eax
 	movl %esp, (%eax)
 
-	movl next_thread, %eax      # eax = next_thread  현재 실행 중인 스레드 구조체의 주소를 eax에 저장
-    movl (%eax), %esp           # esp = next_thread->sp 현재 실행 중인 스레드의 현
+	movl next_thread, %eax      # eax = next_thread  
+    movl (%eax), %esp           # esp = next_thread->sp 
 
-    movl next_thread, %eax
+    
     movl %eax, current_thread   # current_thread = next_thread
 
     pop %edi
