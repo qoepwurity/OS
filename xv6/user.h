@@ -24,7 +24,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
-int uthread_init(int address);  //추가한 것.
+int uthread_init(int address);  
 int check_counter(int op);
 
 // ulib.c

@@ -101,8 +101,6 @@ sys_uthread_init(void)
   return 0;
 }
 
-
-
 int sys_check_counter(void) {
   int op;
   if (argint(0, &op) < 0)  // 사용자로부터 인자 하나 받음
