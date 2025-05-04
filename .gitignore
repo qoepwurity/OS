@@ -1,0 +1,52 @@
+# xv6 build artifacts
+*.o
+*.d
+*.asm
+*.sym
+*.img
+*.out
+*.qemu
+*.dmp
+
+# qemu output files
+*.log
+*.pid
+
+# xv6 kernel and user binaries
+_init
+cat
+echo
+forktest
+grep
+init
+kill
+ln
+ls
+mkdir
+rm
+sh
+stressfs
+usertests
+wc
+zombie
+_*
+
+# Dependency files
+*.d
+
+# Generated Makefiles or backup files
+*.bak
+*~
+
+# Disk images
+fs.img
+kernel
+kernel.asm
+kernel.sym
+kernelmemfs
+memfs.img
+mkfs
+mkfsmemfs
+
+# .DS_Store for macOS
+.DS_Store

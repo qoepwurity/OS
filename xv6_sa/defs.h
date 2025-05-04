@@ -120,6 +120,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+int             uthread_init(int address); // address of the user-level scheduler
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -155,9 +156,6 @@ int             argstr(int, char**);
 int             fetchint(uint, int*);
 int             fetchstr(uint, char**);
 void            syscall(void);
-
-// sysproc.c 이거 추가
-int             uthread_init(uint address);
 
 // timer.c
 void            timerinit(void);

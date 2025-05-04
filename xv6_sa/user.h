@@ -23,10 +23,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-
-
-int uthread_init(int address);
-int check_thread(int op);
+int uthread_init(int address); // address of the user-level scheduler
 
 // ulib.c
 int stat(char*, struct stat*);

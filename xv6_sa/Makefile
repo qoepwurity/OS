@@ -168,14 +168,6 @@ _uthread1: uthread1.o uthread_switch.o
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _uthread1 uthread1.o uthread_switch.o $(ULIB)
 	$(OBJDUMP) -S _uthread1 > uthread1.asm
 
-_uthread2: uthread2.o uthread_switch.o
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _uthread2 uthread2.o uthread_switch.o $(ULIB)
-	$(OBJDUMP) -S _uthread2 > uthread2.asm
-
-_uthread3: uthread3.o uthread_switch.o ulib.o usys.o printf.o umalloc.o
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _uthread3 uthread3.o uthread_switch.o ulib.o usys.o printf.o umalloc.o
-	$(OBJDUMP) -S _uthread3 > uthread3.asm
-
 mkfs: mkfs.c fs.h
 	gcc -Werror -Wall -o mkfs mkfs.c
 
@@ -202,7 +194,6 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_uthread1\
-	_uthread2\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -239,9 +230,14 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
 	else echo "-s -p $(GDBPORT)"; fi)
 ifndef CPUS
-CPUS := 2
+CPUS := 1
 endif
-QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
+QEMUOPTS = -smp $(CPUS)\
+	   -drive file=xv6.img,index=0,media=disk,format=raw,if=ide\
+	   -drive file=fs.img,index=1,media=disk,format=raw,if=ide\
+	   -drive file=/dev/zero,format=raw,index=2,media=disk,format=raw\
+	   -m 512\
+	   $(QEMUEXTRA)
 
 qemu: fs.img xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)

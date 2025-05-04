@@ -26,6 +26,32 @@ sys_wait(void)
   return wait();
 }
 
+// sysproc.c
+/*
+int
+sys_uthread_init(void)
+{
+  int addr;
+
+  // 유저가 전달한 주소(함수 포인터)를 받아와서
+  if (argint(0, &addr) < 0)
+    return -1;
+
+  // 함수 포인터로 형변환하여 uthread_init 호출
+  uthread_init(addr);
+
+  return 0;
+}*/
+
+int sys_uthread_init(void) {
+  int addr;
+  if (argint(0, &addr) < 0)
+    return -1;
+  myproc()->scheduler = addr;  // 저장함 ✅
+  return 0;
+}
+
+
 int
 sys_kill(void)
 {
@@ -88,27 +114,4 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
-}
-
-// 이거 추가
-int
-sys_uthread_init(void)
-{
-  int addr;
-  if (argint(0, &addr) < 0)
-    return -1;
-  myproc()->scheduler = addr;
-  return 0;
-}
-
-int
-sys_check_thread(void) {
-  int op;
-  if (argint(0, &op) < 0)  // 사용자로부터 인자 하나 받음
-    return -1;
-
-  struct proc* p = myproc();
-  p->check_thread += op;  // +1 또는 -1
-
-  return 0;
 }
