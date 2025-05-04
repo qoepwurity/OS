@@ -328,28 +328,28 @@ wait(void)
 void
 scheduler(void)
 {
-  struct proc *p;
-  struct cpu *c = mycpu();
-  c->proc = 0;
+  struct proc *p;   //*구조체 proc : 프로세스를 추적하고 관리하는데 필요한 모든 정보를 담고 있는 녀석.
+  struct cpu *c = mycpu();    // cpu : cpu의 상태, 실행정보 저장 *mycpu() : 어떤 cpu 위에서 실행중인지 cpu포인터 반환
+  c->proc = 0;  //현재 실행되고 있는 cpu 위의 프로세스가 없다는 표시.
   
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
+    acquire(&ptable.lock);  //모든 프로세스 정보가 있는 ptable을 보호하기 위해 잠금.
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if(p->state != RUNNABLE)  //runnable = 실행 가능 & not 실행중. == 다음 실행할 녀석 찾기.
         continue;
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+      c->proc = p;  //찾은 runnable 프로세스를 cpu에 등록.
+      switchuvm(p); //
+      p->state = RUNNING; //프로세스 상태 변경
 
-      swtch(&(c->scheduler), p->context);
+      swtch(&(c->scheduler), p->context); //cpu 스케줄러 컨텍스트에서 프로세스 컨텍스트로. == 커널 ~~> 유저 프로세스
       switchkvm();
 
       // Process is done running for now.
@@ -369,7 +369,7 @@ scheduler(void)
 // break in the few places where a lock is held but
 // there's no process.
 void
-sched(void)
+sched(void) //프로세스가 cpu를 자발적으로 내놓고 스케줄러로 제어 넘기는 경우.
 {
   int intena;
   struct proc *p = myproc();
@@ -383,7 +383,7 @@ sched(void)
   if(readeflags()&FL_IF)
     panic("sched interruptible");
   intena = mycpu()->intena;
-  swtch(&p->context, mycpu()->scheduler);
+  swtch(&p->context, mycpu()->scheduler); //스케줄러 부르기
   mycpu()->intena = intena;
 }
 
